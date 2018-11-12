@@ -1,4 +1,4 @@
-package com.alkanza.distance;
+package com.alkanza;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
