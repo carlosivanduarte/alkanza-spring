@@ -1,4 +1,4 @@
-package com.alkanza.model.rest;
+package com.alkanza.model;
 
 public enum Response {
 	OK,

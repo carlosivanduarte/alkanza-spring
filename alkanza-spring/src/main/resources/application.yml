@@ -3,7 +3,7 @@
 ###
 spring:
   datasource:
-    url: jdbc:h2:~/distance;DB_CLOSE_ON_EXIT=FALSE    
+    url: jdbc:h2:~/alkanza;DB_CLOSE_ON_EXIT=FALSE    
     platform: h2
     username: admin
     password:

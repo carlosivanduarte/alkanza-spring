@@ -5,14 +5,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.alkanza.delegate.IProcessDelegate;
 import com.alkanza.delegate.ProcessDelegate;
-import com.alkanza.model.rest.PlacesRequest;
-import com.alkanza.model.rest.ProcessResponse;
+import com.alkanza.model.PlacesRequest;
+import com.alkanza.model.ProcessResponse;
 
 @RestController
 public class ResultsController {
 	
-	private ProcessDelegate processDelegate;
+	private IProcessDelegate processDelegate;
 	
 	@Autowired
 	public ResultsController(ProcessDelegate processDelegate) {
