@@ -1,9 +1,11 @@
 package com.alkanza.delegate;
 
+import java.util.List;
+
 import com.alkanza.model.PlacesRequest;
-import com.alkanza.model.Response;
+import com.alkanza.model.ProcessResult;
 
 public interface IProcessDelegate {
 	
-	Response process(PlacesRequest placesRequest);
+	List<ProcessResult> process(PlacesRequest placesRequest);
 }

@@ -1,11 +1,10 @@
 package com.alkanza.delegate;
 
-import static com.alkanza.model.Response.OK;
-
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,7 +14,7 @@ import com.alkanza.algorithm.IAlgorithm;
 import com.alkanza.model.Location;
 import com.alkanza.model.PlacesRequest;
 import com.alkanza.model.Point;
-import com.alkanza.model.Response;
+import com.alkanza.model.ProcessResult;
 import com.alkanza.model.entity.Place;
 import com.alkanza.model.entity.Result;
 import com.alkanza.repository.PlaceRepository;
@@ -42,7 +41,7 @@ public class ProcessDelegate implements IProcessDelegate {
 	}
 
 	@Override
-	public Response process(PlacesRequest placesRequest) {
+	public List<ProcessResult> process(PlacesRequest placesRequest) {
 		Result result = buildResult(placesRequest);
 		Iterable<Place> placesDB = placeRepository.findAll();
 		
@@ -79,7 +78,7 @@ public class ProcessDelegate implements IProcessDelegate {
 			}
 		});
 		
-		return OK;
+		return buildProcessResults();
 	}
 	
 	private Result buildResult(PlacesRequest placesRequest) {
@@ -101,5 +100,17 @@ public class ProcessDelegate implements IProcessDelegate {
 	
 	private List<Double> getDistances(List<Point> points) {
 		return FluentIterable.from(points).transform(point -> point.getDistance()).toList();
+	}
+	
+	private List<ProcessResult> buildProcessResults() {
+		Iterable<Result> results = resultRepository.findAll();
+		return StreamSupport.stream(results.spliterator(), false)
+				.map(result -> 
+								new ProcessResult(result.getCreateDateTime(), 
+										result.getUserLatitude(), 
+										result.getUserLongitude(),
+										result.getRadius(),
+										result.getCalculation()))
+				.collect(Collectors.toList());
 	}
 }

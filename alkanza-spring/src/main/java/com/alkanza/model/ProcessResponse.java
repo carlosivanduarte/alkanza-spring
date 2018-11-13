@@ -1,5 +1,7 @@
 package com.alkanza.model;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -7,5 +9,5 @@ import lombok.Data;
 @AllArgsConstructor
 public class ProcessResponse {
 	
-	private Response response;
+	private List<ProcessResult> processResult;
 }

@@ -1,4 +1,4 @@
-var map, infoWindow, circle, userLatLng, json;
+var map, infoWindow, circle, userLatLng, resultsRequest;
       
 function initMap() {
 
@@ -143,7 +143,7 @@ function createRequest(results) {
     return result;
   });  
 
-  var resultsRequest = new Object();
+  resultsRequest = new Object();
   resultsRequest.points = points;
   resultsRequest.radius = getRadius();
   resultsRequest.status = "OK";
@@ -152,9 +152,7 @@ function createRequest(results) {
   user_location.lng = userLatLng.lng();
   resultsRequest.user_location = user_location;
 
-  json = JSON.stringify(resultsRequest);
-
-  console.log('json: ' + json);
+  console.log('json: ' + JSON.stringify(resultsRequest));
 }          
 
 function calculateDistance(location) { 
@@ -162,21 +160,66 @@ function calculateDistance(location) {
     return distance;
 }
 
-function callRestService() {
-
-    var postData = [{"logintype":"1","user":"Administrator","password":"12345","controlid":"999","host":"192.168.2.164"}
-    ];
-
-    $.ajax({
-        url: '//127.0.0.1:8080/process/',
-        type: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify( postData ), 
-        success: function() {
-           alert('hello');
-        },
-        error: function() {
-            alert('error');
-        }
+$(document).ready(function(){
+    $("#submit").click(function(e){
+        e.preventDefault();
+      $.ajax({type: "POST",
+              url: "//localhost:8080/process/",
+              headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json' 
+              },
+              data: JSON.stringify(resultsRequest),
+              dataType: 'json',              
+              success: buildHistory
+      });
     });
-};
+  });
+
+function buildHistory(result) {
+	$('#results').empty();
+	console.log('result: ' + JSON.stringify(result));
+	
+	var elements = ["createDateTime", "userLatitude", "userLongitude", "radius", "calculation"];
+	var restResults = result.processResult;
+	
+	var thead = document.createElement('thead');
+	var trhead = document.createElement('tr');
+	var th;
+	thead.appendChild(trhead);
+	
+	th = document.createElement('th');
+	th.innerHTML = 'Created';
+	trhead.appendChild(th);
+	
+	th = document.createElement('th');
+	th.innerHTML = 'User Latitude';
+	trhead.appendChild(th);
+	
+	th = document.createElement('th');
+	th.innerHTML = 'User Longitude';
+	trhead.appendChild(th);
+	
+	th = document.createElement('th');
+	th.innerHTML = 'Radius';
+	trhead.appendChild(th);
+	
+	th = document.createElement('th');
+	th.innerHTML = 'Calculation';
+	trhead.appendChild(th);
+	
+	$('#results').append(thead);
+	
+    for (var i=0; i<restResults.length; i++){
+        var td;
+        var tr=document.createElement('tr');
+
+        for (var j=0; j < elements.length; ++j){
+            td = document.createElement('td');
+            td.innerHTML=restResults[i][elements[j]];
+            tr.appendChild(td);
+        }
+
+        $('#results').append(tr);
+    }
+}
