@@ -1,26 +1,31 @@
 package com.alkanza.algorithm;
 
-import java.util.function.Consumer;
+import java.util.Comparator;
+import java.util.function.Function;
 
 import org.springframework.stereotype.Component;
 
-import com.alkanza.model.Point;
-
 @Component
 public class Algorithm implements IAlgorithm {
-
+	
 	@Override
 	public Double process(Data data) {
-		Double measure = new Double(0.0);
-		data.getUnbalancedPoints().forEach(new Consumer<Point>() {
-			public void accept(Point unbalancedPoint) {
-				data.getBalancedPoints().forEach(new Consumer<Point>() {
-					public void accept(Point balancedPoint) {
-						
-					}
-				});
+		
+		return data.getUnbalancedDistances().stream().map(new Function<Double, Double>() {
+
+			@Override
+			public Double apply(Double unbalancedDistance) {
+				return data.getBalancedDistances()
+						.stream()
+						.mapToDouble(balancedDistance -> Math.abs(unbalancedDistance - balancedDistance))
+						.sum();
+			}			
+		}).min(new Comparator<Double>() {
+
+			@Override
+			public int compare(Double o1, Double o2) {
+				return o1.compareTo(o2);
 			}
-		});
-		return null;
-	}	
+		}).orElse(0.0);
+	}
 }
