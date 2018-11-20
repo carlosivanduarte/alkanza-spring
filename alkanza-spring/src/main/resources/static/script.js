@@ -1,4 +1,6 @@
 var map, infoWindow, circle, userLatLng, resultsRequest;
+var medicalCenters = [];
+var markers = [];
       
 function initMap() {
 
@@ -21,10 +23,25 @@ function initMap() {
           event.preventDefault();
       }
   });
+  
+  disabledSubmit();
 
   infoWindow = new google.maps.InfoWindow;
+  
+  tryGeolocation();
 
-  // Try HTML5 geolocation.
+  map.addListener('click', function(e) {
+    var lat = e.latLng.lat();
+    var lng = e.latLng.lng();
+    console.log('radius ' + getRadius());
+    userLatLng = new google.maps.LatLng(lat, lng);
+    console.log('new position ' + userLatLng);
+    refreshMap(this, userLatLng);
+    map.panTo(e.latLng);
+  });
+}
+
+function tryGeolocation() {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(function(position) {
       pos = {
@@ -39,7 +56,7 @@ function initMap() {
 
       searchMedicalCenters();
 
-      createCircle(userLatLng, getRadius(), map);
+      createCircle();
 
       // DEBUG
 
@@ -54,19 +71,9 @@ function initMap() {
     // Browser doesn't support Geolocation
     handleLocationError(false, infoWindow, map.getCenter());
   }        
-
-  map.addListener('click', function(e) {
-    var lat = e.latLng.lat();
-    var lng = e.latLng.lng();
-    console.log('radius ' + getRadius());
-    userLatLng = new google.maps.LatLng(lat, lng);
-    console.log('new position ' + userLatLng);
-    refreshMap(this, userLatLng);
-    map.panTo(e.latLng);
-  });
 }
 
- function handleLocationError(browserHasGeolocation, infoWindow, pos) {
+function handleLocationError(browserHasGeolocation, infoWindow, pos) {
   infoWindow.setPosition(pos);
   infoWindow.setContent(browserHasGeolocation ?
                         'Error: The Geolocation service failed.' :
@@ -80,6 +87,7 @@ function createMarker(place) {
     map: map,
     position: place.geometry.location
   });
+  markers.push(marker);
 
   google.maps.event.addListener(marker, 'click', function() {
     infoWindow.setContent(place.name);
@@ -87,7 +95,7 @@ function createMarker(place) {
   });
 } 
 
-function createCircle(latLng, radius, map) {
+function createCircle() {
   circle = new google.maps.Circle({
     strokeColor: '#FF0000',
     strokeOpacity: 0.8,
@@ -95,32 +103,48 @@ function createCircle(latLng, radius, map) {
     fillColor: '#FF0000',
     fillOpacity: 0.35,
     map: map,
-    center: latLng,
-    radius: radius          
+    center: userLatLng,
+    radius: getRadius()          
   });        
 }
 
 function searchMedicalCenters() {
-  var service = new google.maps.places.PlacesService(map);
-  service.textSearch({
+  var request = {
     location: userLatLng,
     radius: getRadius(),
-    query: "medical center"
-  }, processResults);
+    query: 'medical center'
+  };
+  var service = new google.maps.places.PlacesService(map);
+  
+  service.textSearch(request, processResults);    
+  
 }
 
 function processResults(results, status, pagination) {
   if (status === google.maps.places.PlacesServiceStatus.OK) {
-    console.log('RESULTS: ' + results.length);
-    for (var i = 0; i < results.length; i++) {
-      createMarker(results[i]);            
+	if (pagination.hasNextPage) {
+        pagination.nextPage();
     }
-    createRequest(results);
+	results.forEach( function (place) {
+	  var distance = calculateDistance(place.geometry.location);
+	  if (distance < getRadius()) {
+		  medicalCenters.push(place);
+		  console.log('Place: name: ' + place.name + ' + distance: ' + distance);
+		  createMarker(place);
+	  }
+	});
+	if (!pagination.hasNextPage) {
+		createRequest(medicalCenters);
+		enableSubmit();
+	}
   }
 }
   
 function refreshMap() {
   circle.setMap(null);
+  clearMarkers();
+  medicalCenters = [];
+  disabledSubmit();
   searchMedicalCenters(map, userLatLng);        
   createCircle(userLatLng, getRadius(), map);
 }
@@ -130,9 +154,9 @@ function getRadius() {
   return radius;
 }
 
-function createRequest(results) {
+function createRequest() {
 
-  let points = results.map((val, index, arr) => {
+  let points = medicalCenters.map((val, index, arr) => {
     var result = new Object();
     var location = new Object();
     location.lat = val.geometry.location.lat();
@@ -160,11 +184,25 @@ function calculateDistance(location) {
     return distance;
 }
 
+function clearMarkers() {
+	markers.forEach( function(marker) {
+	  marker.setMap(null);
+	});
+}
+
+function disabledSubmit() {
+	$("input[type=submit]").attr("disabled", "disabled");
+}
+
+function enableSubmit() {
+	$("input[type=submit]").removeAttr("disabled");
+}
+
 $(document).ready(function(){
     $("#submit").click(function(e){
         e.preventDefault();
       $.ajax({type: "POST",
-              url: "//localhost:8080/process/",
+              url: "https://alkanza-spring-https.us-east-2.elasticbeanstalk.com:5001/process/",
               headers: {
                   'Accept': 'application/json',
                   'Content-Type': 'application/json' 
