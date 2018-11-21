@@ -40,31 +40,12 @@ public class ProcessDelegate implements IProcessDelegate {
 		this.algorithm = algorithm;
 	}
 
-	@Override
 	public List<ProcessResult> process(PlacesRequest placesRequest) {
 		Result result = buildResult(placesRequest);
-		Iterable<Place> placesDB = placeRepository.findAll();
-		
-		List<Point> pointsBalanced = placesRequest.getPoints().stream().filter(new Predicate<Point>() {
-
-			@Override
-			public boolean test(Point point) {
-				
-				Location location = point.getLocation();
-				for (Place place: placesDB) {
-					boolean found = place.getLatitude().equals(location.getLat()) && place.getLongitude().equals(location.getLng());
-					if(found) {
-						return false;
-					}
-				}
-				return true;
-			}
-		})
-		.collect(Collectors.toList());
 		
 		Data data = new Data(
 				getDistances(placesRequest.getPoints()),
-				getDistances(pointsBalanced));
+				getDistances(getBalancedPoints(placesRequest)));
 		
 		result.setCalculation(algorithm.process(data));
 		
@@ -79,6 +60,30 @@ public class ProcessDelegate implements IProcessDelegate {
 		});
 		
 		return buildProcessResults();
+	}
+	
+	public List<Point> getBalancedPoints(PlacesRequest placesRequest) {
+		Iterable<Place> placesDB = placeRepository.findAll();
+
+		List<Point> balancedPoints = placesRequest.getPoints()
+				.stream().filter(new Predicate<Point>() {
+
+			@Override
+			public boolean test(Point point) {
+				
+				Location location = point.getLocation();
+								
+				for (Place place: placesDB) {
+					boolean found = place.getLatitude().equals(location.getLat()) && place.getLongitude().equals(location.getLng());
+					if(found) {
+						return false;
+					}
+				}
+				return true;				
+			}
+		})
+		.collect(Collectors.toList());
+		return balancedPoints;
 	}
 	
 	private Result buildResult(PlacesRequest placesRequest) {

@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.alkanza.delegate.IProcessDelegate;
-import com.alkanza.delegate.ProcessDelegate;
 import com.alkanza.model.PlacesRequest;
 import com.alkanza.model.ProcessResponse;
 
@@ -16,7 +15,7 @@ public class ResultsController {
 	private IProcessDelegate processDelegate;
 	
 	@Autowired
-	public ResultsController(ProcessDelegate processDelegate) {
+	public ResultsController(IProcessDelegate processDelegate) {
 		this.processDelegate = processDelegate;
 	}
 	@PostMapping("/process")
